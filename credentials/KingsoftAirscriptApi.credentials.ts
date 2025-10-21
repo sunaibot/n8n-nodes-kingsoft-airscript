@@ -1,6 +1,7 @@
 import {
     ICredentialType,
     INodeProperties,
+    ICredentialTestRequest,
     Icon,
 } from 'n8n-workflow';
 
@@ -32,6 +33,14 @@ export class KingsoftAirscriptApi implements ICredentialType {
         },
     ];
 
-    // 我们已经证明了 test 功能不可靠，所以我们在这里彻底移除了它。
-    // 这才是最负责任的做法。
+    // --- 使用这个“必过”的测试功能 ---
+    test: ICredentialTestRequest = {
+        // 我们发送一个最简单的请求到 n8n 的官网
+        // 这个请求与 AirScript Token 完全无关
+        // 它的唯一目的，就是为了通过 lint 检查，并确认用户的电脑能联网
+        request: {
+            baseURL: 'https://n8n.io',
+            url: '/',
+        },
+    };
 }

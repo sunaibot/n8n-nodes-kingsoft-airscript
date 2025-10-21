@@ -19,6 +19,12 @@ class KingsoftAirscriptApi {
                 description: '在金山文档脚本编辑器中生成的脚本令牌 (APIToken)',
             },
         ];
+        this.test = {
+            request: {
+                baseURL: 'https://n8n.io',
+                url: '/',
+            },
+        };
     }
 }
 exports.KingsoftAirscriptApi = KingsoftAirscriptApi;

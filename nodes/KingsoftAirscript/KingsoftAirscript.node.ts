@@ -128,7 +128,7 @@ export class KingsoftAirscript implements INodeType {
             }, 
             // 第四个属性：参数输入框
             {
-                displayName: '脚本参数 (argv)',
+                displayName: '脚本参数 (Argv)',
                 name: 'argv',
                 type: 'json', // // 类型是 JSON，意味着可以传对象、数组等复杂结构
                 default: '{\n  "message": "Hello from n8n!"\n}',
@@ -160,6 +160,7 @@ export class KingsoftAirscript implements INodeType {
                 description: '从异步执行脚本操作中获取到的任务 ID',
             },          
         ],
+		usableAsTool: true,
     };
 
     // 'execute' 方法是节点的心脏，点击“执行”按钮时，就会运行这里的代码

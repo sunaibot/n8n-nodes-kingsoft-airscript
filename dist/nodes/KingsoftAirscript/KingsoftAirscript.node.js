@@ -100,7 +100,7 @@ class KingsoftAirscript {
                     ],
                 },
                 {
-                    displayName: '脚本参数 (argv)',
+                    displayName: '脚本参数 (Argv)',
                     name: 'argv',
                     type: 'json',
                     default: '{\n  "message": "Hello from n8n!"\n}',
@@ -131,6 +131,7 @@ class KingsoftAirscript {
                     description: '从异步执行脚本操作中获取到的任务 ID',
                 },
             ],
+            usableAsTool: true,
         };
     }
     async execute() {
