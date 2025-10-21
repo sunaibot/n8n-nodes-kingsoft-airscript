@@ -1,1 +1,14 @@
-node_modules
+# 依赖包文件夹
+/node_modules
+
+# 编译输出文件夹
+/dist
+
+# npm 调试日志
+npm-debug.log*
+.npm/
+
+# 编辑器和系统生成的文件
+.vscode/
+.idea/
+*.DS_Store
