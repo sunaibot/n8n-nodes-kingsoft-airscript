@@ -1,6 +1,6 @@
 {
     "name": "n8n-nodes-kingsoft-airscript",
-    "version": "0.2.0",
+    "version": "0.2.1",
     "description": "一个 n8n 社区节点，用于执行金山 AirScript 脚本，支持同步、异步和所有 Context 参数。",
     "license": "MIT",
     "homepage": "https://www.kdocs.cn/l/cho73TDGgMPP",
