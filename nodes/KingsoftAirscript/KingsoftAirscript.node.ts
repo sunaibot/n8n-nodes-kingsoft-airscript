@@ -4,8 +4,8 @@ import {
     INodeExecutionData,
     INodeType,
     INodeTypeDescription,
-    IDataObject, // <-- 加上这个
-    NodeOperationError, // <-- 别忘了导入这个
+    IDataObject,
+    NodeOperationError,
 } from 'n8n-workflow';
 
 // 这里定义我们节点的主体
@@ -56,54 +56,77 @@ export class KingsoftAirscript implements INodeType {
                 ],
                 default: 'runScriptSync',
             },
-            // --- 智能输入区 ---
+            // --- 新增：“二选一”的输入模式选择框 ---
             {
-                displayName: 'Webhook 链接',
-                name: 'webhookUrl',
-                type: 'string',
-                default: '',
-                placeholder: '推荐！在此粘贴从金山文档复制的完整链接',
-                description: '粘贴链接可自动识别 File ID 和 Script ID，无需手动填写下面两项。',
+                displayName: 'ID 输入模式',
+                name: 'idInputMode',
+                type: 'options',
+                noDataExpression: true,
                 displayOptions: {
                     show: {
                         operation: ['runScriptSync', 'runScriptAsync'],
                     },
                 },
-            },        
-            
-         
-            // 第二个属性：File ID 输入框
+                options: [
+                    {
+                        name: '通过 Webhook 链接输入',
+                        value: 'url',
+                        description: '粘贴完整的链接，最简单快捷',
+                    },
+                    {
+                        name: '手动输入 ID',
+                        value: 'manual',
+                        description: '分别填写 File ID 和 Script ID',
+                    },
+                ],
+                default: 'url',
+            },
+
+            // --- 模式一：Webhook 链接输入 ---
+            {
+                displayName: 'Webhook 链接',
+                name: 'webhookUrl',
+                type: 'string',
+                default: '',
+                required: true,
+                displayOptions: {
+                    show: {
+                        operation: ['runScriptSync', 'runScriptAsync'],
+                        idInputMode: ['url'], // 只在选择 'url' 模式时显示
+                    },
+                },
+                placeholder: '在此粘贴从金山文档复制的完整链接',
+                description: '推荐！最简单的方式。',
+            },
+
+            // --- 模式二：手动输入 ID ---
             {
                 displayName: '文件 ID (File ID)',
                 name: 'fileId',
+                type: 'string',
+                default: '',
+                required: true,
                 displayOptions: {
                     show: {
-                        // 让它在同步和异步时都显示
-                        operation: [
-                            'runScriptSync',
-                            'runScriptAsync', 
-                        ],
+                        operation: ['runScriptSync', 'runScriptAsync'],
+                        idInputMode: ['manual'], // 只在选择 'manual' 模式时显示
                     },
                 },
-                type: 'string', // 文本输入框
-                default: '',
-                description: '运行脚本所在文档的文件 ID如果未提供 Webhook URL，则必须手动填写此项。',
+                description: '脚本所在文档的 ID。',
             },
-            // 第三个属性：Script ID 输入框
             {
                 displayName: '脚本 ID (Script ID)',
                 name: 'scriptId',
-                displayOptions: {
-                    show: {
-                        operation: [
-                            'runScriptSync',
-                            'runScriptAsync',
-                        ],
-                    },
-                },
                 type: 'string',
                 default: '',
-                description: '要运行的脚本的 ID如果未提供 Webhook URL，则必须手动填写此项。',
+                required: true,
+                displayOptions: {
+                    show: {
+                        operation: ['runScriptSync', 'runScriptAsync'],
+                        idInputMode: ['manual'], // 只在选择 'manual' 模式时显示
+                    },
+                },
+                description: '要执行的脚本的 ID。',
             },
             // --- 可选的 Context 参数被收纳到这里，让界面更清爽 ---
             {
@@ -176,24 +199,30 @@ export class KingsoftAirscript implements INodeType {
                 let responseData;
 
                 if (operation === 'runScriptSync' || operation === 'runScriptAsync') {
-                    // --- 智能解析 ID 的逻辑 ---
-                    let fileId = this.getNodeParameter('fileId', i, '') as string;
-                    let scriptId = this.getNodeParameter('scriptId', i, '') as string;
-                    const webhookUrl = this.getNodeParameter('webhookUrl', i, '') as string;
-                    
-                    if (webhookUrl) {
+                    // --- 根据“输入模式”获取 ID ---
+                    const idInputMode = this.getNodeParameter('idInputMode', i, 'url') as string;
+                    let fileId = '';
+                    let scriptId = '';
+
+                    if (idInputMode === 'url') {
+                        const webhookUrl = this.getNodeParameter('webhookUrl', i, '') as string;
                         const match = webhookUrl.match(/file\/(.*?)\/script\/(.*?)\//);
                         if (match && match[1] && match[2]) {
                             fileId = match[1];
                             scriptId = match[2];
                         } else {
-                            throw new NodeOperationError(this.getNode(), 'Webhook URL 格式不正确，无法解析出 File ID 和 Script ID。');
+                            throw new NodeOperationError(this.getNode(), 'Webhook 链接格式不正确，无法解析出 ID。');
                         }
+                    } else { // idInputMode === 'manual'
+                        fileId = this.getNodeParameter('fileId', i, '') as string;
+                        scriptId = this.getNodeParameter('scriptId', i, '') as string;
                     }
-
+                    
+                    // 由于界面上已经做了必填校验，这里的二次校验可以简化
                     if (!fileId || !scriptId) {
-                        throw new NodeOperationError(this.getNode(), '必须提供 Webhook URL 或手动填写 File ID 和 Script ID。');
+                         throw new NodeOperationError(this.getNode(), '未能获取到有效的 File ID 和 Script ID。');
                     }
+                    // --- ID 获取逻辑结束 ---
                     // --- 构建 Context 对象的逻辑 ---
                     const argvString = this.getNodeParameter('argv', i, '{}') as string;
                     const contextParameters = this.getNodeParameter('contextParameters', i, {}) as { [key: string]: string };                    

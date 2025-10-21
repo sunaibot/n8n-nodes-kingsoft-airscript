@@ -37,47 +37,71 @@ class KingsoftAirscript {
                     default: 'runScriptSync',
                 },
                 {
-                    displayName: 'Webhook 链接',
-                    name: 'webhookUrl',
-                    type: 'string',
-                    default: '',
-                    placeholder: '推荐！在此粘贴从金山文档复制的完整链接',
-                    description: '粘贴链接可自动识别 File ID 和 Script ID，无需手动填写下面两项。',
+                    displayName: 'ID 输入模式',
+                    name: 'idInputMode',
+                    type: 'options',
+                    noDataExpression: true,
                     displayOptions: {
                         show: {
                             operation: ['runScriptSync', 'runScriptAsync'],
                         },
                     },
+                    options: [
+                        {
+                            name: '通过 Webhook 链接输入',
+                            value: 'url',
+                            description: '粘贴完整的链接，最简单快捷',
+                        },
+                        {
+                            name: '手动输入 ID',
+                            value: 'manual',
+                            description: '分别填写 File ID 和 Script ID',
+                        },
+                    ],
+                    default: 'url',
+                },
+                {
+                    displayName: 'Webhook 链接',
+                    name: 'webhookUrl',
+                    type: 'string',
+                    default: '',
+                    required: true,
+                    displayOptions: {
+                        show: {
+                            operation: ['runScriptSync', 'runScriptAsync'],
+                            idInputMode: ['url'],
+                        },
+                    },
+                    placeholder: '在此粘贴从金山文档复制的完整链接',
+                    description: '推荐！最简单的方式。',
                 },
                 {
                     displayName: '文件 ID (File ID)',
                     name: 'fileId',
-                    displayOptions: {
-                        show: {
-                            operation: [
-                                'runScriptSync',
-                                'runScriptAsync',
-                            ],
-                        },
-                    },
                     type: 'string',
                     default: '',
-                    description: '运行脚本所在文档的文件 ID如果未提供 Webhook URL，则必须手动填写此项。',
+                    required: true,
+                    displayOptions: {
+                        show: {
+                            operation: ['runScriptSync', 'runScriptAsync'],
+                            idInputMode: ['manual'],
+                        },
+                    },
+                    description: '脚本所在文档的 ID。',
                 },
                 {
                     displayName: '脚本 ID (Script ID)',
                     name: 'scriptId',
-                    displayOptions: {
-                        show: {
-                            operation: [
-                                'runScriptSync',
-                                'runScriptAsync',
-                            ],
-                        },
-                    },
                     type: 'string',
                     default: '',
-                    description: '要运行的脚本的 ID如果未提供 Webhook URL，则必须手动填写此项。',
+                    required: true,
+                    displayOptions: {
+                        show: {
+                            operation: ['runScriptSync', 'runScriptAsync'],
+                            idInputMode: ['manual'],
+                        },
+                    },
+                    description: '要执行的脚本的 ID。',
                 },
                 {
                     displayName: '可选上下文参数',
@@ -143,21 +167,26 @@ class KingsoftAirscript {
             try {
                 let responseData;
                 if (operation === 'runScriptSync' || operation === 'runScriptAsync') {
-                    let fileId = this.getNodeParameter('fileId', i, '');
-                    let scriptId = this.getNodeParameter('scriptId', i, '');
-                    const webhookUrl = this.getNodeParameter('webhookUrl', i, '');
-                    if (webhookUrl) {
+                    const idInputMode = this.getNodeParameter('idInputMode', i, 'url');
+                    let fileId = '';
+                    let scriptId = '';
+                    if (idInputMode === 'url') {
+                        const webhookUrl = this.getNodeParameter('webhookUrl', i, '');
                         const match = webhookUrl.match(/file\/(.*?)\/script\/(.*?)\//);
                         if (match && match[1] && match[2]) {
                             fileId = match[1];
                             scriptId = match[2];
                         }
                         else {
-                            throw new n8n_workflow_1.NodeOperationError(this.getNode(), 'Webhook URL 格式不正确，无法解析出 File ID 和 Script ID。');
+                            throw new n8n_workflow_1.NodeOperationError(this.getNode(), 'Webhook 链接格式不正确，无法解析出 ID。');
                         }
                     }
+                    else {
+                        fileId = this.getNodeParameter('fileId', i, '');
+                        scriptId = this.getNodeParameter('scriptId', i, '');
+                    }
                     if (!fileId || !scriptId) {
-                        throw new n8n_workflow_1.NodeOperationError(this.getNode(), '必须提供 Webhook URL 或手动填写 File ID 和 Script ID。');
+                        throw new n8n_workflow_1.NodeOperationError(this.getNode(), '未能获取到有效的 File ID 和 Script ID。');
                     }
                     const argvString = this.getNodeParameter('argv', i, '{}');
                     const contextParameters = this.getNodeParameter('contextParameters', i, {});
